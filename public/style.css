@@ -1,7 +1,30 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1 0 auto;
+}
+
+footer {
+  flex-shrink: 0;
+}
+
 .capitalize-once::first-letter {
   text-transform: uppercase;
 }
+
+
 .bg-darkgrey{background-color: #333839;}
+.bg-darkgreyless{background-color: #535b5d;}
+.bg-darkgreyless:hover{background-color: #6c757d;}
 .bg-1{background-color: #22577a;}
 .bg-1:hover{background-color: #6c757d;color: white;}
 .bg-2{background-color: #38a3a5;} 
@@ -15,8 +38,12 @@
 .bg-6{background-color: #d8f8db;}
 .bg-7{background-color: #c4e4e6;}
 .bg-8{background-color: #dadada;}
+.bg-9{background-color: #d9d9d9;}
 .bg-err{background-color: #dc3545;}
   .bg-err:hover{background-color: #6c757d;color: white;}
+
+.text-darkgrey{color: #333839;}
+.text-darkgreyless{color: #535b5d;}
 .text-1{color: #22577a;}
 .text-2{color: #38a3a5;}.text-2-disable{color: #3d8485;}
 .text-3{color: #57cc99;}
@@ -25,6 +52,87 @@
 .text-6{color: #d8f8db;;}
 .text-7{color: #dadada;}
 
-.hidden {
-  display: none
+.hidden { display: none; }
+.show { display: block; }
+
+.cursor-default { cursor: default; }
+
+.wrapper {
+  background-color: #f3f3f3;
+  padding: 3rem;
 }
+.image-container {
+  margin: 10px;
+}
+.image-small {
+  width: 25%;
+  height: auto;
+}
+.description {
+  max-width: 400px;
+  margin-left: 2rem;
+}
+.description h2 {
+  font-size: 24px;
+  color: #00b3b3;
+}
+.description p {
+  font-size: 16px;
+  color: #333;
+}
+
+.ft-victoria {font-family: "Playwrite AU VIC", cursive;}
+.ft-roboto {
+  font-family: "Roboto", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.board{ background: none;}
+
+.underline{
+  text-decoration: underline;
+  font-style: italic;
+}
+
+.text-shadow {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); 
+}
+
+.mt-90{ margin-top: 90px;}
+.mt-70{ margin-top: 150px;}
+
+.carousel{ max-width: 800px;}
+
+.offcanvas-body {
+  overflow-y: auto; 
+  max-height: 80vh; 
+}
+
+
+.pagination .page-item.active .page-link {
+  background-color: #38a3a5;  /* active */
+  border-color: #ffffff; 
+  color: #ffffff; 
+}
+.pagination .page-item .page-link {/* inactive */
+  background-color: #f8f9fa; 
+  color: #38a3a5; 
+}
+.pagination .page-item .page-link:hover { /* bg hover  */
+  background-color: #d8f8db; 
+  color: #343a40; 
+}
+
+@keyframes bounce { 0%,100% 
+  {transform: translateY(0);}
+  40% {transform: translateY(-20px);}
+  50% {transform: translateY(0px);}
+  60% {transform: translateY(-15px);}
+  70% {transform: translateY(-0px);}
+  80% {transform: translateY(-5px);}
+  90% {transform: translateY(0px);}
+}
+.start-bounce{animation:bounce 1s;}
+
+

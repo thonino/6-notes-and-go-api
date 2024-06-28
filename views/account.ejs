@@ -1,17 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <%- include('./partials/bootstrap') %>
+  <%- include('./partials/links') %>
   <title>Account</title>
 </head>
 <body>
   <%- include('./partials/nav') %>
   <%- include('./partials/tips') %>
+  <%- include('./partials/action') %>
   <div class="container col-6 d-flex flex-column align-items-center">
-    <h1 class="text-center"> Account ! </h1>
+    <h1 class="text-center ft-victoria text-darkgreyless pt-2"> Account ! </h1>
     <% if (!user) { %>
       <p>Please log in to access this page!</p>
     <% } else { %>
@@ -42,7 +40,7 @@
               type="password"
               class="form-control"
               name="checkPassword"
-              placeholder="Write old password"
+              placeholder="write your password"
             />
             <label for="newEmail" class="fst-italic mb-1 text-2">
               New email:
@@ -51,7 +49,7 @@
               type="text"
               class="form-control"
               name="newEmail"
-              placeholder="Write your new email"
+              placeholder="write your new email"
             />
             <div class="mt-2 mb-3 text-center">
               <button type="submit" class="btn bg-3 ms-1">
@@ -83,7 +81,7 @@
               type="password"
               class="form-control"
               name="checkPassword"
-              placeholder="Write old password"
+              placeholder="write your old password"
             />
             <label for="newPassword" class="fst-italic mb-1 text-2">
               New password:
@@ -92,7 +90,7 @@
               type="password"
               class="form-control"
               name="newPassword"
-              placeholder="Write new password"
+              placeholder="write your new password"
             />
             <div class="mt-2 mb-3 text-center">
               <button type="submit" class="btn bg-3 ms-1">
@@ -102,26 +100,45 @@
           </form>
         </div>
       </div>
-      <!-- Delete Account -->
-      <form
-        id="deleteUser"
-        class="mb-3"
-        action="/account/delete/<%= user._id %>?_method=DELETE"
-        method="POST"
-      >
-        <h3 class="mb-0">
-          Delete Account
-          <button
-            type="button"
-            class="btn btn-danger btn-sm"
-            onclick="confirmDeleteUser()"
+      <div class="">
+        <div class="">
+          <p class="fs-3">
+            Delete Account
+            <button id="showInputDelete" class="btn bg-3 btn-sm">
+              <i class="bi bi-trash-fill "></i>
+            </button>
+          </p>
+          <form
+            id="inputDelete"
+            class="d-none flex-column"
+            action="/account/delete/<%= user._id %>?_method=DELETE"
+            method="POST"
           >
-            <i class="bi bi-trash-fill"></i>
-          </button>
-        </h3>
-      </form>
+            <label for="checkPassword" class="fst-italic mb-1 text-2">
+              Password:
+            </label>
+            <input
+              type="password"
+              class="form-control"
+              name="checkPassword"
+              placeholder="write your password"
+            />
+            <div class="mt-2 mb-3 text-center">
+              <button
+                type="button"
+                class="btn btn-danger btn-sm"
+                onclick="confirmDeleteUser()"
+              >
+              Delete
+              <i class="bi bi-trash-fill"></i>
+            </button>
+            </div>
+          </form>
+        </div>
+      </div>
     <% } %>
   </div>
+  <%- include('./partials/footer') %>
   <script src="/script.js"></script>
 </body>
 </html>

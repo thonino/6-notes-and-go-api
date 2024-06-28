@@ -11,7 +11,7 @@ const crypto = require('crypto');
 
 const nodemailer = require('nodemailer');
 
-// Configurez le transporteur SMTP réutilisable pour l'envoi d'e-mails
+// Configurer le transporteur SMTP réutilisable pour l'envoi d'e-mails
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -33,7 +33,7 @@ const mongoose = require("mongoose");
 const User = require("./models/User");
 const Category = require("./models/Category");
 const Note = require("./models/Note");
-const Theme = require("./models/Theme");
+const Lesson = require("./models/Lesson");
 const Quiz = require("./models/Quiz");
 const url = process.env.DATABASE_URL;
 mongoose
@@ -59,6 +59,7 @@ const { log } = require("console");
 
 // EJS : 
 app.set('view engine', 'ejs');
+app.set('views', './views');
 
 // Public folder
 // app.use(express.static(path.join(__dirname, 'public')));
@@ -68,23 +69,24 @@ app.use(express.static("public"));
 const makeAvailable = async (req, res, next) => {
   try {
     const user = req.session.user;
-    const selectedTheme = req.session.selectedTheme;
+    const selectedLesson = req.session.selectedLesson;
     const tips = req.session.tips; 
-    let themes, notes, categories, quizzes, tenQuizzes;
+    let lessons, notes, categories, quizzes, tenQuizzes;
     if (user) {
-      themes = await Theme.find({ userId: user._id });
-      notes = await Note.find({ userId: user._id, themeName: selectedTheme });
-      categories = await Category.find({ userId: user._id, themeName: selectedTheme });
-      quizzes = await Quiz.find({ userId: user._id, themeName: selectedTheme });
-      tenQuizzes = await Quiz.find({ userId: user._id, themeName: selectedTheme }).sort({ _id: -1 }).limit(10);
+      lessons = await Lesson.find({ userId: user._id });
+      notes = await Note.find({ userId: user._id, lessonName: selectedLesson });
+      categories = await Category.find({ userId: user._id, lessonName: selectedLesson });
+      quizzes = await Quiz.find({ userId: user._id, lessonName: selectedLesson });
+      tenQuizzes = await Quiz.find({ userId: user._id, lessonName: selectedLesson }).sort({ _id: -1 }).limit(10);
     }
     res.locals.user = user;
-    res.locals.themes = themes;
+    res.locals.lessons = lessons;
     res.locals.notes = notes;
+    res.locals.notesFull = notes;
     res.locals.categories = categories;
     res.locals.quizzes = quizzes;
     res.locals.tenQuizzes = tenQuizzes;
-    res.locals.selectedTheme = selectedTheme;
+    res.locals.selectedLesson = selectedLesson;
     res.locals.tips = tips;
     next();
   } catch (err) {
@@ -97,16 +99,15 @@ app.use(makeAvailable);
 
 //---------------------------------ROOTS---------------------------------//
 
-// Session selected theme
-app.post('/selectTheme', (req, res) => {
-  const selectedTheme = req.body.theme;
-  if (req.session.themes && req.session.themes.length > 0) {
-    // Reset the other theme selected
-    req.session.themes = req.session.themes.map(theme => ({
-      ...theme, selected: theme.name === selectedTheme
+// Session selected lesson
+app.post('/selectLesson', (req, res) => {
+  const selectedLesson = req.body.lesson;
+  if (req.session.lessons && req.session.lessons.length > 0) {
+    req.session.lessons = req.session.lessons.map(lesson => ({ // Reset the other lesson selected
+      ...lesson, selected: lesson.name === selectedLesson
     }));
   }
-  req.session.selectedTheme = selectedTheme; // New theme selected
+  req.session.selectedLesson = selectedLesson; // New lesson selected
   res.redirect(`/notes`); 
 });
 app.post('/tips', (req, res) => {
@@ -123,10 +124,11 @@ app.get("/", async (req, res) => {
   try {
     res.render("index", {
       user: res.locals.user,
-      themes: res.locals.themes,
+      lessons: res.locals.lessons,
       notes: res.locals.notes,
+      notesFull: res.locals.notesFull,
       caterogies: res.locals.caterogies,
-      selectedTheme: res.locals.selectedTheme,
+      selectedLesson: res.locals.selectedLesson,
       quizzes: res.locals.quiz,
       tips: res.locals.tips,
     });
@@ -143,8 +145,8 @@ app.get("/account", (req, res) => {
   try {
     res.render("account", {
       user: res.locals.user,
-      themes: res.locals.themes,
-      selectedTheme: res.locals.selectedTheme,
+      lessons: res.locals.lessons,
+      selectedLesson: res.locals.selectedLesson,
     });
   } catch (err) {
     console.error("Error rendering account:", err);
@@ -157,11 +159,9 @@ app.put("/account/:id", async (req, res) => {
   const { newEmail, newPassword, checkPassword } = req.body;
   try {
     const user = await User.findById(req.params.id);
-
     if (!bcrypt.compareSync(checkPassword, user.password)) {
       return res.status(400).send("Invalid password");
     }
-
     if (newEmail) {
       const emailExists = await User.findOne({ email: newEmail });
       if (emailExists) {
@@ -169,11 +169,9 @@ app.put("/account/:id", async (req, res) => {
       }
       user.email = newEmail;
     }
-
     if (newPassword) {
       user.password = bcrypt.hashSync(newPassword, 10);
     }
-
     await user.save();
     req.session.destroy();
     res.redirect('/alert?message=Successfully updated account');
@@ -184,19 +182,28 @@ app.put("/account/:id", async (req, res) => {
 });
 
 // DELETE ACCOUNT
-app.delete("/account/delete/:id", (req, res) => {
-  User.findByIdAndDelete(req.params.id)
-    .then(() => {
-      res.redirect("/logout");
-    })
-    .catch((err) => {
-      console.log(err);
-    });
+app.delete("/account/delete/:id", async (req, res) => {
+  try {
+    const checkPassword = req.body.checkPassword;
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+    if (!bcrypt.compareSync(checkPassword, user.password)) {
+      return res.status(400).send("Invalid password");
+    }
+
+    await User.findByIdAndDelete(req.params.id);
+    res.redirect("/logout");
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("Failed to delete account");
+  }
 });
 
 // GET REGISTER
 app.get('/register', (req, res) => {
-  res.render("RegisterForm", {user: res.locals.user});
+  res.render("registerForm", {user: res.locals.user});
 });
 
 // POST REGISTER
@@ -215,7 +222,8 @@ const userData = new User({
 
 // GET LOGIN
 app.get('/login', (req, res) => {
-res.render("LoginForm", { user: res.locals.user });});
+  res.render("loginForm", { user: res.locals.user });
+});
 
 // POST LOGIN
 app.post('/login', (req, res) => {
@@ -238,7 +246,6 @@ app.get('/logout', (req, res) => {
   });
 });
 
-
 // Forgot password
 app.get('/passwordforgot', (req, res) => {
   res.render('passwordForgot');
@@ -254,14 +261,12 @@ app.post('/passwordforgot', async (req, res) => {
     user.token = token;
     user.tokenExpires = Date.now() + 3600000; // 1 hour
     await user.save();
-
     const mailOptions = {
       from: 'sixnotesandgo@gmail.com',
       to: email,
       subject: 'Reset password',
       text: `Reset your password at this address: http://localhost:5000/reset/${token}`
     };
-
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.error(error);
@@ -301,13 +306,13 @@ app.post('/passwordreset', async (req, res) => {
   }
 });
 
-// POST ADD THEME
-app.post('/addtheme', function(req, res){
-const themeData = new Theme({
-  themeName: req.body.themeName,
+// POST ADD Lesson
+app.post('/addlesson', function(req, res){
+const lessonData = new Lesson({
+  lessonName: req.body.lessonName,
   userId: req.body.userId,
   })
-  themeData
+  lessonData
     .save()
     .then(() => {
       res.redirect("/");
@@ -320,17 +325,34 @@ const themeData = new Theme({
 // Route GET "/notes"
 app.get("/notes", async (req, res) => {
   try {
-    let notes = res.locals.notes;
-    const filter = req.body.categoryFilter;
+    let notes = res.locals.notes || [];
+    let notesFull = res.locals.notesFull;
+    const filter = req.query.categoryFilter; 
     const quizzes = res.locals.quiz;
-    if (filter){
+    const search = req.query.search;
+    if (search) {
+      notes = notesFull.filter(note => 
+        note.front.toLowerCase().includes(search.toLowerCase()) ||
+        note.back.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    if (filter) {
       notes = notes.filter(note => note.categoryName === filter);
     }
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+    const paginatedNotes = notes.reverse().slice(startIndex, endIndex);
+    const totalPages = Math.ceil(notes.length / limit);
+
     res.render("notes", {
       categories: res.locals.categories,
-      selectedTheme: res.locals.selectedTheme,
-      themes: res.locals.themes,
-      notes, filter, quizzes,
+      selectedLesson: res.locals.selectedLesson,
+      lessons: res.locals.lessons,
+      notes: paginatedNotes,
+      currentPage: page,
+      notesFull, filter, search, quizzes, totalPages, limit
     });
   } catch (err) {
     console.error("Error rendering notes:", err);
@@ -341,17 +363,34 @@ app.get("/notes", async (req, res) => {
 // Route POST "/notes"
 app.post("/notes", async (req, res) => {
   try {
-    let notes = res.locals.notes;
-    const filter = req.body.categoryFilter;
     const quizzes = res.locals.quiz;
-    if (filter){
+    let notes = res.locals.notes || [];
+    const filter = req.body.categoryFilter;
+    let notesFull = res.locals.notesFull;
+    const search = req.query.search;
+    if (search) {
+      notes = notesFull.filter(note => 
+        note.front.toLowerCase().includes(search.toLowerCase()) ||
+        note.back.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    if (filter) {
       notes = notes.filter(note => note.categoryName === filter);
     }
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+    const paginatedNotes = notes.slice(startIndex, endIndex);
+    const totalPages = Math.ceil(notes.length / limit);
+
     res.render("notes", {
       categories: res.locals.categories,
-      selectedTheme: res.locals.selectedTheme,
-      themes: res.locals.themes,
-      notes, filter, quizzes,
+      selectedLesson: res.locals.selectedLesson,
+      lessons: res.locals.lessons,
+      notes: paginatedNotes,
+      currentPage: page,
+      notesFull, filter, search, quizzes, totalPages, limit
     });
   } catch (err) {
     console.error("Error rendering notes:", err);
@@ -368,30 +407,28 @@ app.post("/addnote", async function (req, res) {
   if (!newCategoryName || typeof newCategoryName !== "string") {
     newCategoryName = "uncategorized";
   }
-  const themeName = req.body.themeName;
+  const lessonName = req.body.lessonName;
   const userId = req.body.userId;
   try {
-    // Recherche de la catégorie existante
-    let existingCategory = await Category.findOne({
+    let existingCategory = await Category.findOne({ // Recherche de la catégorie existante
       categoryName: newCategoryName,
-      themeName,
+      lessonName,
       userId,
     });
-    // Si aucune catégorie correspondante n'est trouvée 
-    if (!existingCategory && newCategoryName) {
+    if (!existingCategory && newCategoryName) { // Si nouvelle catégorie 
       existingCategory = await Category.create({
         categoryName: newCategoryName,
-        themeName,
+        lessonName,
         userId,
       });
     }
-    // Création de la note avec la catégorie déterminée
-    const noteData = new Note({
+    
+    const noteData = new Note({ // Création de la note avec la catégorie 
       front: req.body.front,
       back: req.body.back,
       example: req.body.example,
       categoryName: newCategoryName,
-      themeName,
+      lessonName,
       userId,
     });
     await noteData.save();
@@ -408,50 +445,37 @@ app.put("/editnote/:id", async (req, res) => {
   let back = req.body.back;
   let example = req.body.example;
   let newCategoryName = req.body.selectedCategory;
-
-  // Vérification si une nouvelle catégorie est sélectionnée
-  if (newCategoryName === "newCat") {
+  if (newCategoryName === "newCat") { // Vérification si une nouvelle catégorie est sélectionnée
     newCategoryName = req.body.newCategory;
   }
-
-  // Vérification de la validité de la catégorie
-  if (!newCategoryName || typeof newCategoryName !== "string") {
+  if (!newCategoryName || typeof newCategoryName !== "string") { // Vérification de la validité de la catégorie
     newCategoryName = "uncategorized";
   }
-
-  const themeName = req.body.themeName;
+  const lessonName = req.body.lessonName;
   const userId = req.body.userId;
-
   try {
-    // Recherche de la note à mettre à jour
-    const noteToUpdate = await Note.findById(req.params.id);
+    const noteToUpdate = await Note.findById(req.params.id); // Recherche de la note à mettre à jour
     if (!noteToUpdate) {
       return res.status(404).send("Note not found");
     }
-
-    // Mettre à jour les données de la note
     noteToUpdate.front = front;
     noteToUpdate.back = back;
     noteToUpdate.example = example;
     noteToUpdate.categoryName = newCategoryName;
-    noteToUpdate.themeName = themeName;
+    noteToUpdate.lessonName = lessonName;
     noteToUpdate.userId = userId;
 
-    // Sauvegarder les modifications de la note
-    await noteToUpdate.save();
+    await noteToUpdate.save(); // Sauvegarder les modifications de la note
 
-    // Recherche de la catégorie existante
-    let existingCategory = await Category.findOne({
+    let existingCategory = await Category.findOne({ // Recherche de la catégorie existante
       categoryName: newCategoryName,
-      themeName,
+      lessonName,
       userId,
     });
-
-    // S'il ne trouve pas de catégorie, créer new catégorie
-    if (!existingCategory && newCategoryName) {
+    if (!existingCategory && newCategoryName) {  // S'il ne trouve pas de catégorie, créer new catégorie
       existingCategory = await Category.create({
         categoryName: newCategoryName,
-        themeName,
+        lessonName,
         userId,
       });
     }
@@ -470,18 +494,15 @@ app.delete("/note/delete/:id", async (req, res) => {
       return res.status(404).json({ message: "Note not found" });
     }
     const userId = noteData.userId;  ;
-    const themeName = noteData.themeName;
+    const lessonName = noteData.lessonName;
     const categoryName= noteData.categoryName;
     let notes = res.locals.notes;
     notes = notes.filter(note => note.categoryName === noteData.categoryName);
-
-    // Supprimer catégorie si c'est le dernier
-    if(notes.length === 1){
-      await Category.findOneAndDelete({ userId, themeName, categoryName });
+    if(notes.length === 1){  // Supprimer catégorie si c'est le dernier
+      await Category.findOneAndDelete({ userId, lessonName, categoryName });
     }
-
-    // Supprimer la note
-    await Note.findByIdAndDelete(req.params.id);
+    
+    await Note.findByIdAndDelete(req.params.id);  // Supprimer la note
 
     res.redirect("/notes");
   } catch (err) {
@@ -490,22 +511,21 @@ app.delete("/note/delete/:id", async (req, res) => {
   }
 });
 
-// DELETE THEME
-app.delete("/deletetheme", async (req, res) => {
+// DELETE Lesson
+app.delete("/deletelesson", async (req, res) => {
   try {
     const userId = res.locals.user;
-    const themeName = res.locals.selectedTheme;
-    await Note.deleteMany({ userId, themeName }); // Delete all notes 
-    await Category.deleteMany({ userId, themeName }); // Delete all categories
-    await Theme.deleteOne({ userId, themeName }); // Delete theme
-    delete req.session.selectedTheme; // Leave the session
+    const lessonName = res.locals.selectedLesson;
+    await Note.deleteMany({ userId, lessonName }); // Delete all notes 
+    await Category.deleteMany({ userId, lessonName }); // Delete all categories
+    await Lesson.deleteOne({ userId, lessonName }); // Delete lesson
+    delete req.session.selectedLesson; // Leave the session
     res.redirect("/");
   } catch (err) {
     console.error(err);
     res.render("error", { message: "Delete error" });
   }
 });
-
 
 // SESSION SELECTED CATEGORY
 app.post('/selectCategory', (req, res) => {
@@ -516,9 +536,8 @@ app.post('/selectCategory', (req, res) => {
 // Quiz
 app.get("/quiz", async (req, res) => {
   try {
-    const selectedTheme = res.locals.selectedTheme;
-    const allNotes = res.locals.notes.filter(note => note.themeName === selectedTheme);
-    // Compter le nombre d'occurrences de chaque catégorie dans le thème sélectionné
+    const selectedLesson = res.locals.selectedLesson;
+    const allNotes = res.locals.notes.filter(note => note.lessonName === selectedLesson);
     const categoryCounts = [];
     allNotes.forEach(note => {
       const index = categoryCounts.findIndex(
@@ -530,16 +549,16 @@ app.get("/quiz", async (req, res) => {
         categoryCounts.push({ categoryName: note.categoryName, count: 1 });
       }
     });
-    // Filtrer les catégories qui ont au moins 6 occurrences
-    const categoriesFilter = categoryCounts.filter(
+    
+    const categoriesFilter = categoryCounts.filter( // Filter catégories 
       item => item.count >= 6).map(item => item.categoryName
       );
     res.render("quiz", {
       user: res.locals.user,
-      themes: res.locals.themes,
+      lessons: res.locals.lessons,
       notes: res.locals.notes,
       categories: categoriesFilter,
-      selectedTheme: selectedTheme,
+      selectedLesson: selectedLesson,
     });
   } catch (err) {
     console.error("Error rendering quiz:", err);
@@ -573,10 +592,10 @@ app.get("/quiz/:category", async (req, res) => {
     }
     res.render("quizGame", {
       user: res.locals.user,
-      themes: res.locals.themes,
+      lessons: res.locals.lessons,
       notes: res.locals.notes,
       selectedCategory: selectedCategory,
-      selectedTheme: res.locals.selectedTheme,
+      selectedLesson: res.locals.selectedLesson,
       randomNotes: randomNotes,
     });
   } catch (err) {
@@ -609,10 +628,10 @@ app.post("/addquiz", async function (req, res) {
         ]);
       }
     }
-    const selectedTheme = req.session.selectedTheme;
+    const selectedLesson = req.session.selectedLesson;
     const quizData = new Quiz({
       userId: res.locals.user,
-      themeName: selectedTheme, 
+      lessonName: selectedLesson, 
       categoryName: req.body.categoryName, 
       score: score,
       data: data,
@@ -683,5 +702,12 @@ app.get("/alert", (req, res) => {
   res.render("alert", { message });
 });
 
+
+// cmd windows-> tape : ipconfig -> ipv4 : 192.168.1.237
+// for phone :  192.168.1.237:5000
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+// app.listen(PORT, '0.0.0.0', () => {
+//   console.log(`App listening at http://localhost:${PORT}`);
+// });
+

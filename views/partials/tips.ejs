@@ -1,80 +1,70 @@
-<nav class="bg-darkgrey <%= tips %>">
-  <div class="d-flex justify-content-center align-items-center " >
+<nav class="bg-secondary <%= tips %>">
+  <div class="d-flex justify-content-center align-items-center flex-wrap p-2" >
       <!-- Block 1 (Center) -->
-    <div class="d-flex mx-auto text-light fst-italic gap-2 mt-2 ">
-      <span class="text-warning mt-1">Tips :</span>
-      <span class="mt-1">
-      <% if (!user) { %>
-        <p> <!-- stape 1 -->
-          Sign up or log in to use the app !!
-          <span class="text-warning">( above )</span>
-        </p>
-      <% } else { %>
-        <% if (themes && themes.length > 0) { %>
-          <% if (selectedTheme) { %>
-            <% if (notes && notes.length >= 1 && notes.length < 6) { %>
-              <p> <!-- stape 5 -->
-                After
-                <span class="text-5">"6 notes"</span>
-                added, you could take a quiz !
-              </p>
-            <% } else if (notes.length < 1) { %>
-              <p> <!-- stape 4 -->
-                Next, add a note with
-                <span class="text-5">"+Add Note"</span> button!
-                <span class="text-warning">( below )</span>
-              </p>
-            <% } else if (notes.length > 5) { %>
-              <% if (tenQuizzes.length === 0) { %>
-                <p> <!-- stape 6 -->
-                  Try a quiz ! Click on the
-                  <span class="text-5">Quiz</span> button!
-                  <span class="text-warning">( above )</span>
+    <div
+      class="d-flex mx-auto text-white fst-italic mt-2 gap-2"
+      onmouseenter="handleMouseEnter(event)"
+    >
+      <p class="text-4 mt-1">Tips :</p>
+      <div class="mt-1">
+        <% if (!user) { %>
+          <p class="showright250"> <!-- stape 1 -->
+            Please
+              <a href="/login" class="text-5 text-decoration-none">Log-in</a>
+            to use the app !
+          </p>
+        <% } else { %>
+          <% if (lessons && lessons.length > 0) { %>
+            <% if (selectedLesson) { %>
+              <% if (notesFull && notesFull.length >= 1 && notesFull.length < 6) { %>
+                <p class="showright250"> <!-- stape 5 -->
+                  Take a quiz after
+                  <span class="text-3">6 notes</span>
+                  added !
                 </p>
-              <% } else if (tenQuizzes.length === 1) { %>
-                <p> <!-- stape 7 -->
-                  Congrats for your 1st quiz!
-                  <span class="text-5">Quiz</span>!
-                  <span class="text-warning">( above )</span>
+              <% } else if (notesFull.length < 1) { %>
+                <p class="showright250"> <!-- stape 4 -->
+                  In the action menu, write a new note
                 </p>
-              <% } else if (tenQuizzes.length > 1) { %>
-                <p> <!-- stape 8 -->
-                  Try another quiz with
-                  <span class="text-5">Quiz</span> button!
-                  <span class="text-warning">( above )</span>
-                </p>
+              <% } else if (notesFull.length > 5) { %>
+                <% if (tenQuizzes.length === 0) { %>
+                  <p class="showright250"> <!-- stape 6 -->
+                    Start a
+                    <span class="text-3">Quiz</span> in the action menu !
+                  </p>
+                <% } else if (tenQuizzes.length === 1) { %>
+                  <p class="showright250"> <!-- stape 7 -->
+                    Great ! Congrats for your first quiz !
+                  </p>
+                <% } else if (tenQuizzes.length > 1) { %>
+                  <p class="showright250"> <!-- stape 8 -->
+                    Discover your 10 las quizzes in stats page
+                  </p>
+                <% } %>
               <% } %>
+            <% } else { %>
+              <p class="showright250"> <!-- stape 3 -->
+                In the top bar, select the lesson 
+              </p>
             <% } %>
           <% } else { %>
-            <p> <!-- stape 3 -->
-              Select the theme at
-              <span class="text-5">Theme's</span> menu!
-              <span class="text-warning">( above )</span>
+            <p class="showright250"> <!-- stape 2 -->
+              In the action menu, add a new lesson
             </p>
           <% } %>
-        <% } else { %>
-          <p> <!-- stape 2 -->
-            At first, add a theme with
-            <span class="text-5">"+Add"</span> button!
-            <span class="text-warning">( above )</span>
-          </p>
         <% } %>
-      <% } %>
-    </span>
+      </div>
     </div>
 
     <!-- Block 2 (Right) -->
       <% if (!tips || tips !== "d-none") { %>
-        <i 
-          class="bi bi-info-lg text-warning fs-4" 
-          style="margin-top: -5px;">
-        </i>
         <form action="/tips" method="POST" class="text-white">
           <input name="status" value="d-none" type="hidden"/>
           <button 
             type="submit" 
-            class="btn text-warning p-0 me-2"
+            class="btn text-4 p-0 me-2 showright"
             style="margin-top: -7px;"
+            onmouseenter="handleMouseEnter(event)"
           >
             <i class="bi bi-x-circle-fill"></i>
           </button>

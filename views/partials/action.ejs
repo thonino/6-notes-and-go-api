@@ -1,0 +1,184 @@
+<% if (user) { %>
+  <nav class="bg-darkgrey">
+    <p class="text-center ft-victoria fs-2 fw-light text-light pt-2 m-0"> Action Menu : </p>
+    <ul class="navbar-nav">
+      <div class="d-flex justify-content-center align-items-center" >
+        <div class="pt-2 d-flex justify-content-center gap-3">
+          <% if (selectedLesson && notesFull.length > 0) { %>
+            <div class="bg-1 rounded-2 showleftspeed" onmouseenter="handleMouseEnter(event)">
+              <a  href="/notes" class="btn btn-lg text-white d-flex flex-column fs-6 m-0 p-2">
+                <i class="bi bi-book-fill text-light"></i>
+                Learn 
+              </a>
+            </div>
+          <% } else { %>
+            <div class="bg-darkgreyless rounded-2 showleftspeed">
+              <span  class="btn btn-lg text-secondary d-flex flex-column cursor-default fs-6 m-0 p-2">
+                <i class="bi bi-book-fill"></i>
+                Learn 
+              </span>
+            </div>
+          <% } %>
+          <div class="bg-2 rounded-2 fs-6 showleftspeed" onmouseenter="handleMouseEnter(event)">
+            <button 
+              class="btn btn-lg text-white d-flex flex-column fs-6 m-0 p-2" 
+              data-bs-toggle="modal" 
+              data-bs-target="#lessonModal"
+            >
+              <i class="bi bi-plus-lg text-white"></i>
+              Lesson
+            </button>
+          </div>
+          <% if (user && lessons && selectedLesson) { %>
+            <div class="bg-2 rounded-2 showleftspeed" onmouseenter="handleMouseEnter(event)">
+              <button 
+                class="btn btn-lg text-white d-flex flex-column fs-6 m-0 p-2" 
+                data-bs-toggle="modal" 
+                data-bs-target="#noteModal"
+                >
+                <i class="bi bi-pencil-fill"></i>
+                Note
+              </button>
+            </div>
+            <% } else { %>
+              <div class="bg-darkgreyless rounded-2 showleftspeed">
+                <span class="btn btn-lg text-secondary d-flex flex-column cursor-default fs-6 m-0 p-2">
+                  <i class="bi bi-pencil-fill"></i>
+                  Note
+                </span>
+              </div>
+            <% } %>
+            <% if (notesFull && notesFull.length> 5) { %>
+              <div class="bg-3 rounded-2 showleftspeed" onmouseenter="handleMouseEnter(event)">
+                <a  href="/quiz" class="btn btn-lg  d-flex flex-column fs-6 m-0 p-2">
+                  <i class="bi bi-controller "></i>
+                  Quiz
+                </a>
+              </div>
+              <% } else { %>
+                <div class="bg-darkgreyless rounded-2 showleftspeed">
+                  <span class="btn btn-lg text-secondary d-flex flex-column cursor-default fs-6 m-0 p-2">
+                    <i class="bi bi-controller"></i>
+                    Quiz
+                  </span>
+                </div>
+              <% } %>
+          <% if (tenQuizzes && tenQuizzes.length > 0 ) { %>
+            <div class="bg-4 rounded-2 showleftspeed" onmouseenter="handleMouseEnter(event)">
+              <a  href="/stats" class="btn btn-lg text-dark d-flex flex-column fs-6 m-0 p-2">
+                <i class="bi bi-file-earmark-check"></i>
+                Stats
+              </a>
+            </div>
+          <% } else { %>
+            <div class="bg-darkgreyless rounded-2 showleftspeed">
+              <span class="btn btn-lg text-secondary d-flex flex-column cursor-default fs-6 m-0 p-2">
+                <i class="bi bi-file-earmark-check"></i>
+                Stats
+              </span>
+            </div>
+          <% } %>
+      </div>
+    </ul>
+    <% if (selectedLesson) { %>
+        <p 
+          class="fs-3 text-2 ft-roboto fw-bold text-center mt-2 pb-1 m-0 "
+        >
+          Current Lesson : 
+          <span class="fs-4 text-light fw-light fst-italic ">
+            <%= selectedLesson %> 
+          </span> 
+        </p>
+    <% } else { %>
+      <div class="pb-3"></div>
+  <% }} %>  
+  </nav>
+<% if (user ) { %>
+  <!-- Lesson Modal -->
+    <div class="modal fade" id="lessonModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content p-0 m-0">
+          <i class="bi bi-book text-center text-2 fs-1"></i>
+          <div class="modal-header text-darkgreyless  fs-4 p-0 ms-3">
+            <i class="bi bi-plus-lg"></i>
+            <p class="modal-title ft-victoria">New Lesson</p>
+            <button 
+              class="btn-close me-2 showright" 
+              type="button" 
+              data-bs-dismiss="modal" 
+              aria-label="Close">
+            </button>
+          </div>
+          <div class="modal-body">
+            <form class="" action="/addlesson" method="POST">
+              <div class="mb-3">
+                <label for="Lessonname" class="form-label text-2 fst-italic fw-bold m-0 p-0 mb-1">Lesson Name</label>
+                <input type="text" class="form-control" name="lessonName" placeholder="write the lesson name..">
+                <% if (user._id) { %>
+                  <input type="hidden" name="userId" value="<%= user._id %>">
+                  <% } %>
+              </div>
+              <button type="submit" class="btn bg-3">Add</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  <!-- Modal New Note-->
+  <div class="modal fade" id="noteModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <i class="bi bi-pencil-fill text-center text-2 fs-1"></i>
+        <div class="modal-header text-darkgreyless fs-4 p-0 ms-3">
+          <i class="bi bi-plus-lg"></i>
+          <p class="modal-title ft-victoria">New Note</p>
+          <button 
+            class="btn-close me-2" 
+            type="button" 
+            data-bs-dismiss="modal" 
+            aria-label="Close">
+          </button>
+        </div>
+        <div class="modal-body">
+          <form action="/addnote" method="POST">
+            <div class="mb-3">
+              <label for="back" class="form-label text-3 fst-italic fw-bold m-0 p-0 mb-1">Note</label>
+              <input type="text" class="form-control" name="back" placeholder="write a note to learn...">
+            </div>
+            <div class="mb-3">
+              <label for="front" class="form-label text-2 fst-italic fw-bold m-0 p-0 mb-1">Answer</label>
+              <input type="text" class="form-control" name="front" placeholder="write it's answer...">
+            </div>
+            <div class="mb-3">
+              <label for="example" class="form-label text-secondary fst-italic fw-bold m-0 p-0 mb-1">Example</label>
+              <input type="text" class="form-control" name="example" placeholder="give an example...">
+            </div>
+            <% if (categories) { %>
+              <select name="selectedCategory" class="form-select text-capitalize bg-2 text-white mt-2"
+                onchange="hideContainer(this)">
+                <option value="uncategorized" hidden>uncategorized</option>
+                <option value="newCat">new category</option>
+                <% categories.forEach(category=> { %>
+                  <option value="<%= category.categoryName %>">
+                    <%= category.categoryName %>
+                  </option>
+                  <% }) %>
+              </select>
+            <% } %>
+            <div id="categoryContainer" style="display: none;">
+              <label for="newCategory" class="form-label ms-1 mt-1 fw-bold text-2">
+                Create a new category
+              </label>
+              <input type="text" class="form-control" name="newCategory" placeholder="write the category name...">
+            </div>
+            <% if (selectedLesson) { %>
+              <input type="hidden" name="lessonName" value="<%= selectedLesson %>">
+            <% } %>
+            <input type="hidden" name="userId" value="<%= user._id %>">
+            <button type="submit" class="btn bg-3 mt-2">Add</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+<% } %>
